@@ -119,9 +119,9 @@ uv pip install --system --no-cache-dir --no-deps --index-strategy unsafe-best-ma
 sudo apt-get autoremove -y cmake zlib1g-dev
 
 # We keep g++ on GPU images, because uninstalling removes CUDA Devel tooling
-if [[ ! -d /usr/local/cuda ]]; then
-    sudo apt-get autoremove -y g++
-fi
+# if [[ ! -d /usr/local/cuda ]]; then
+#     sudo apt-get autoremove -y g++
+# fi
 
 sudo rm -rf /var/lib/apt/lists/*
 sudo apt-get clean

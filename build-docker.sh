@@ -5,9 +5,9 @@
 
 GPU=""
 BASE_IMAGE="ubuntu:22.04"
-WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl"
-CPP_WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray_cpp-3.0.0.dev0-cp310-cp310-manylinux2014_x86_64.whl"
-PYTHON_VERSION="3.10"
+WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray-3.0.0.dev0-cp312-cp312-manylinux2014_x86_64.whl"
+CPP_WHEEL_URL="https://s3-us-west-2.amazonaws.com/ray-wheels/latest/ray_cpp-3.0.0.dev0-cp312-cp312-manylinux2014_x86_64.whl"
+PYTHON_VERSION="3.12"
 
 BUILD_ARGS=()
 
@@ -70,16 +70,19 @@ REQUIREMENTS_FILE_BASE_DEPS="python/deplocks/base_deps/${PYTHON_DEPSET_FILE_NAME
 cp "${REQUIREMENTS_FILE_BASE_DEPS}" "${RAY_DEPS_BUILD_DIR}/."
 
 BUILD_CMD=(
-    docker build "${BUILD_ARGS[@]}"
+    docker buildx build  \
+    --platform linux/amd64 "${BUILD_ARGS[@]}"
     --build-arg BASE_IMAGE="$BASE_IMAGE"
     --build-arg PYTHON_VERSION="${PYTHON_VERSION}"
     --build-arg PYTHON_DEPSET="${PYTHON_DEPSET_FILE_NAME}"
-    -t "rayproject/base-deps:dev$GPU" "${RAY_DEPS_BUILD_DIR}"
+    -t "ghcr.io/xcaliber-health/ray-base-deps:dev$GPU" \
+    --push \
+    "${RAY_DEPS_BUILD_DIR}"
 )
 
 if [[ "$OUTPUT_SHA" == "YES" ]]; then
     IMAGE_SHA="$("${BUILD_CMD[@]}")"
-    echo "rayproject/base-deps:dev$GPU SHA:$IMAGE_SHA"
+    echo "ghcr.io/xcaliber-health/ray-base-deps:dev$GPU SHA:$IMAGE_SHA"
 else
     "${BUILD_CMD[@]}"
 fi
@@ -96,20 +99,24 @@ wget --quiet "$WHEEL_URL" -P "$RAY_BUILD_DIR/.whl"
 wget --quiet "$CPP_WHEEL_URL" -P "$RAY_BUILD_DIR/.whl"
 cp docker/ray/Dockerfile "$RAY_BUILD_DIR"
 
-WHEEL="$(basename "$WHEEL_DIR"/.whl/ray-*.whl)"
+WHEEL="$(basename "$RAY_BUILD_DIR"/.whl/ray-*.whl)"
 
 BUILD_CMD=(
-    docker build "${BUILD_ARGS[@]}"
-    --build-arg FULL_BASE_IMAGE="rayproject/base-deps:dev$GPU"
+    docker buildx build  \
+    --platform linux/amd64 "${BUILD_ARGS[@]}"
+    --build-arg FULL_BASE_IMAGE="ghcr.io/xcaliber-health/ray-base-deps:dev$GPU"
     --build-arg WHEEL_PATH=".whl/${WHEEL}"
-    -t "rayproject/ray:dev$GPU" "${RAY_BUILD_DIR}"
+    -t "ghcr.io/xcaliber-health/ray:dev$GPU" \
+    --push \
+    "${RAY_BUILD_DIR}"
 )
+
 
 if [[ "$OUTPUT_SHA" == "YES" ]]; then
     IMAGE_SHA="$("${BUILD_CMD[@]}")"
-    echo "rayproject/ray:dev$GPU SHA:$IMAGE_SHA"
+    echo "ghcr.io/xcaliber-health/ray:dev$GPU SHA:$IMAGE_SHA"
 else
     "${BUILD_CMD[@]}"
 fi
 
-rm -rf "$WHEEL_DIR"
+rm -rf "$RAY_DEPS_BUILD_DIR" "$RAY_BUILD_DIR"
