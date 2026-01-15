@@ -1,0 +1,27 @@
+proxy_location: EveryNode
+
+http_options:
+  host: 0.0.0.0
+  port: 8000
+
+applications:
+  - name: gateway
+    route_prefix: /gateway
+    import_path: apps.app_gateway:app
+    deployments:
+      - name: Validator
+        num_replicas: 1
+      - name: Gateway
+        num_replicas: 1
+
+  - name: workers
+    route_prefix: /workers
+    import_path: experiments.apps.app_workers:app
+    deployments:
+      - name: Worker
+        num_replicas: auto
+        max_ongoing_requests: 20
+        autoscaling_config:
+          min_replicas: 1
+          max_replicas: 20
+          target_ongoing_requests: 5
