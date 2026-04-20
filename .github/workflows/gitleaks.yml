@@ -1,0 +1,26 @@
+name: Gitleaks Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+  pull_request:
+    branches:
+      - "**"
+
+  schedule:
+    - cron: "30 5 * * 0"      #Every Sunday 11 AM
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  gitleaks:
+    uses: xcaliber-health/xc-health-workflows/.github/workflows/gitleaks.yml@master
+    with:
+      upload_artifact: "false"
+    secrets:
+      GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
